@@ -1,6 +1,6 @@
 # Jsonline
 
-<img alt="PyPI - License" src="https://img.shields.io/github/license/fsadannn/expressive_regex"> <img alt="PyPI - License" src="https://travis-ci.org/fsadannn/expressive_regex.svg"> <img alt="Codecov" src="https://img.shields.io/codecov/c/github/fsadannn/expressive_regex.svg">
+<img alt="PyPI - License" src="https://img.shields.io/github/license/fsadannn/jsonline"> <img alt="PyPI - License" src="https://travis-ci.org/fsadannn/jsonline.svg"> <img alt="Codecov" src="https://img.shields.io/codecov/c/github/fsadannn/jsonline.svg">
 
 Jsonline is intend to use to explore and work with json lines files and avoid keep the entire data in memory or constantly read the whole file.This library handle json lines files as it was a read only list, but with `append` too. This library build and index with the position of the being and end of each json in the file. When an element is accessed we use the mentioned index to read only the line with the requested json. This index is efficient handled and store in gzip format with extension `.json.idx`.
 
