@@ -26,7 +26,7 @@ deploy:
     script: make dev-deploy #poetry publish
     on:
       tags: true
-      all_branches: true
+      branch: master
 
   - provider: script
     script: make dev-test-deploy
