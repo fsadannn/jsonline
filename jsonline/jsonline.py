@@ -56,7 +56,7 @@ class LRUCache:
 
 
 class PositionArray(collections_abc.MutableSequence):
-    __Slots__ = ('_data')
+    __slots__ = ('_data')
 
     def __init__(self, data: Optional[array] = None):
         if data is not None:
@@ -83,34 +83,34 @@ class PositionArray(collections_abc.MutableSequence):
         return self._data
 
     def __len__(self) -> int:
-        return len(self._data)//2
+        return len(self._data) // 2
 
     def _validate_index(self, idx: int):
-        index_bound = len(self._data)//2
+        index_bound = len(self._data) // 2
         if -index_bound > idx or idx >= index_bound:
             raise IndexError
 
     def __getitem__(self, idx: int) -> (int, int):
         self._validate_index(idx)
         data = self._data
-        return (data[idx*2], data[2*idx+1])
+        return (data[idx * 2], data[2 * idx + 1])
 
     def __setitem__(self, idx: int, item: [int, int]):
         self._validate_index(idx)
         data = self._data
-        data[idx*2], data[idx*2+1] = item
+        data[idx * 2], data[idx * 2 + 1] = item
 
     def __delitem__(self, idx: int):
         self._validate_index(idx)
-        self._data.pop(2*idx)
-        self._data.pop(2*idx)
+        self._data.pop(2 * idx)
+        self._data.pop(2 * idx)
 
     def insert(self, index, value):
-        index_bound = len(self._data)//2
+        index_bound = len(self._data) // 2
         if index > index_bound or index < 0:
             raise IndexError
-        self._data.insert(index*2, value[1])
-        self._data.insert(index*2, value[0])
+        self._data.insert(index * 2, value[1])
+        self._data.insert(index * 2, value[0])
 
 
 class jsonLine(collections_abc.Sequence):
@@ -126,8 +126,8 @@ class jsonLine(collections_abc.Sequence):
         name: str = pth.name
         pth: Path = pth.parent
         self._index: PositionArray = PositionArray()
-        self._index_path: Path = pth/(name+'.json.idx')
-        self._data_path: Path = pth/(name+'.json')
+        self._index_path: Path = pth / (name + '.json.idx')
+        self._data_path: Path = pth / (name + '.json')
         if not self._data_path.exists():
             self._data_path.touch()
             with self._index_path.open('w'):
@@ -172,7 +172,7 @@ class jsonLine(collections_abc.Sequence):
             raise IndexError
         if idx in self._cache:
             return self._cache.get(idx)
-        idx1 = index[idx]
+        idx1: (int, int) = index[idx]
         data = json.loads(self._read_chunk(idx1[0], idx1[1]))
         self._cache.put(idx, data)
         return data
@@ -204,7 +204,7 @@ class jsonLine(collections_abc.Sequence):
         f = io.TextIOWrapper(buffer, encoding='ascii', write_through=True)
         for dat in data:
             jdata = json.dumps(dat)
-            idx = f.tell()+end_idx  # get the actual position in the file
+            idx = f.tell() + end_idx  # get the actual position in the file
             offset = 0
             offset += f.write(jdata)
             offset += f.write('\n')
@@ -226,7 +226,7 @@ class jsonLine(collections_abc.Sequence):
         data: str = file.readline()
         while data != '':
             pos: int = file.tell()
-            index.append((idx, pos-idx-1))
+            index.append((idx, pos - idx - 1))
             idx = pos
             data = file.readline()
         self._index = index
