@@ -113,7 +113,7 @@ class PositionArray(collections_abc.MutableSequence):
         self._data.insert(index * 2, value[0])
 
 
-class jsonLine(collections_abc.Sequence):
+class JsonLine(collections_abc.Sequence):
     __slots__ = ('_index', '_index_path', '_data_path',
                  '_data_file', '_cache')
 
@@ -236,5 +236,5 @@ class jsonLine(collections_abc.Sequence):
         self._build_index()
 
 
-def open(path: Union[str, Path], default=None, cache: int = 10) -> jsonLine:
-    return jsonLine(path, default, cache)
+def open(path: Union[str, Path], default=None, cache: int = 10) -> JsonLine:
+    return JsonLine(path, default, cache)
