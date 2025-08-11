@@ -1,6 +1,6 @@
 [project]
 name = "jsonline"
-version = "0.3.0"
+version = "0.3.1"
 description = "Jsonline is intend to use to explore and work with json lines files and avoid keep the entire data in memory or constantly read the whole file"
 readme = {file = "Readme.md", content-type = "text/markdown"}
 license = {file = "LICENSE"}
