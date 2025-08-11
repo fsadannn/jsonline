@@ -126,11 +126,9 @@ class JsonLine(collections_abc.Sequence):
     def __init__(
         self,
         path: Union[str, Path],
-        default: Any = None,
         cache_size: int = 10,
         string_keys: bool = True,
     ):
-        self._default = default
         options = orjson.OPT_NAIVE_UTC | orjson.OPT_APPEND_NEWLINE
         if not string_keys:
             options |= orjson.OPT_NON_STR_KEYS
@@ -144,8 +142,8 @@ class JsonLine(collections_abc.Sequence):
 
         self._index: PositionArray = PositionArray()
 
-        self._index_path: Path = pth / (name + ".json.idx")
-        self._data_path: Path = pth / (name + ".json")
+        self._index_path: Path = pth / (name + ".jsonl.idx")
+        self._data_path: Path = pth / (name + ".jsonl")
 
         if not self._data_path.exists():
             self._data_path.touch()
@@ -266,5 +264,5 @@ class JsonLine(collections_abc.Sequence):
         self._build_index()
 
 
-def open(path: Union[str, Path], default=None, cache: int = 10) -> JsonLine:
-    return JsonLine(path, default, cache)
+def open(path: Union[str, Path], cache: int = 10) -> JsonLine:
+    return JsonLine(path, cache)
