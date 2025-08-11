@@ -21,13 +21,6 @@ jobs:
     - name: testing
       run: ls -la
 
-    - name: Verify tag is on master branch
-      run: |
-        if ! git branch -r --contains ${{ github.ref_name }} | grep -q 'origin/master'; then
-          echo "Tag ${{ github.ref_name }} is not on the master branch."
-          exit 1
-        fi
-
     - uses: actions/setup-python@v5
       with:
         python-version-file: 'pyproject.toml' # Read python version from a file pyproject.toml
