@@ -3,24 +3,15 @@ from __future__ import annotations
 import collections.abc as collections_abc
 import gzip
 import io
-import json as _json
 from array import array
 from collections import OrderedDict
 from functools import partial
 from pathlib import Path
 from typing import Any, BinaryIO, Iterable, Optional, TextIO, Tuple, Union
 
-# remove space around separator to have compact files
-_SEPARATORS = (',', ':')
-_ARRAY_TYPE = 'L'
+import orjson
 
-
-class json:
-    __slots__ = ()
-    dump = partial(_json.dump, separators=_SEPARATORS, ensure_ascii=True)
-    dumps = partial(_json.dumps, separators=_SEPARATORS, ensure_ascii=True)
-    load = _json.load
-    loads = _json.loads
+_ARRAY_TYPE = "L"
 
 
 class LRUCache:
@@ -57,7 +48,7 @@ class LRUCache:
 
 
 class PositionArray(collections_abc.MutableSequence):
-    __slots__ = ('_data')
+    __slots__ = "_data"
 
     def __init__(self, data: Optional[array] = None):
         if data is not None:
@@ -65,17 +56,17 @@ class PositionArray(collections_abc.MutableSequence):
         else:
             self._data = array(_ARRAY_TYPE)
 
-    def dump(self, f: BinaryIO):
+    def dump(self, f: BinaryIO | io.BufferedIOBase):
         self._data.tofile(f)
 
     @staticmethod
-    def load(f: BinaryIO) -> PositionArray:
+    def load(f: BinaryIO | io.BufferedIOBase) -> PositionArray:
         # load the array by chunks of 4Kb
         chunk_size_in_bytes = 4096
         ar = array(_ARRAY_TYPE)
         data = f.read(chunk_size_in_bytes)
 
-        while data != b'':
+        while data != b"":
             ar.frombytes(data)
             data = f.read(chunk_size_in_bytes)
 
@@ -94,18 +85,18 @@ class PositionArray(collections_abc.MutableSequence):
         if -index_bound > idx or idx >= index_bound:
             raise IndexError
 
-    def __getitem__(self, idx: int) -> Tuple[int, int]:
+    def __getitem__(self, idx: int) -> Tuple[int, int]:  # type: ignore
         self._validate_index(idx)
         data = self._data
 
         return (data[idx * 2], data[2 * idx + 1])
 
-    def __setitem__(self, idx: int, item: Tuple[int, int]):
+    def __setitem__(self, idx: int, item: Tuple[int, int]):  # type: ignore
         self._validate_index(idx)
         data = self._data
         data[idx * 2], data[idx * 2 + 1] = item
 
-    def __delitem__(self, idx: int):
+    def __delitem__(self, idx: int):  # type: ignore
         self._validate_index(idx)
         self._data.pop(2 * idx)
         self._data.pop(2 * idx)
@@ -121,14 +112,30 @@ class PositionArray(collections_abc.MutableSequence):
 
 
 class JsonLine(collections_abc.Sequence):
-    __slots__ = ('_index', '_index_path', '_data_path',
-                 '_data_file', '_cache')
+    __slots__ = (
+        "_index",
+        "_index_path",
+        "_data_path",
+        "_data_file",
+        "_cache",
+        "_default",
+        "_json_dumps",
+        "_json_loads",
+    )
 
-    def __init__(self, path: Union[str, Path], default: Any = None,
-                 cache_size: int = 10):
-        if default is not None:
-            json.dump = partial(json.dump, default=default)
-            json.dumps = partial(json.dumps, default=default)
+    def __init__(
+        self,
+        path: Union[str, Path],
+        default: Any = None,
+        cache_size: int = 10,
+        string_keys: bool = True,
+    ):
+        self._default = default
+        options = orjson.OPT_NAIVE_UTC | orjson.OPT_APPEND_NEWLINE
+        if not string_keys:
+            options |= orjson.OPT_NON_STR_KEYS
+        self._json_dumps = partial(orjson.dumps, option=options)
+        self._json_loads = orjson.loads
 
         pth: Path = Path(path)
         name: str = pth.name
@@ -137,20 +144,18 @@ class JsonLine(collections_abc.Sequence):
 
         self._index: PositionArray = PositionArray()
 
-        self._index_path: Path = pth / (name + '.json.idx')
-        self._data_path: Path = pth / (name + '.json')
+        self._index_path: Path = pth / (name + ".json.idx")
+        self._data_path: Path = pth / (name + ".json")
 
         if not self._data_path.exists():
             self._data_path.touch()
 
-            with self._index_path.open('w'):
+            with self._index_path.open("w"):
                 pass
 
-            self._data_file: TextIO = self._data_path.open(
-                'r', encoding='ascii')
+            self._data_file: TextIO = self._data_path.open("r", encoding="utf-8")
         else:
-            self._data_file: TextIO = self._data_path.open(
-                'r', encoding='ascii')
+            self._data_file: TextIO = self._data_path.open("r", encoding="utf-8")
 
             if not self._index_path.exists():
                 self._build_index()
@@ -166,11 +171,11 @@ class JsonLine(collections_abc.Sequence):
         self.close()
 
     def _dump_index(self):
-        with gzip.open(self._index_path, 'wb', compresslevel=9) as f:
+        with gzip.open(self._index_path, "wb", compresslevel=9) as f:
             self._index.dump(f)
 
     def _load_index(self):
-        with gzip.open(self._index_path, 'rb') as f:
+        with gzip.open(self._index_path, "rb") as f:
             self._index = PositionArray.load(f)
 
     def _read_chunk(self, position: int, n_bytes: int) -> str:
@@ -182,7 +187,7 @@ class JsonLine(collections_abc.Sequence):
     def __len__(self) -> int:
         return len(self._index)
 
-    def __getitem__(self, idx: int):
+    def __getitem__(self, idx: int):  # type: ignore
         index: PositionArray = self._index
 
         if -len(index) > idx or idx >= len(index):
@@ -192,7 +197,7 @@ class JsonLine(collections_abc.Sequence):
             return self._cache.get(idx)
 
         idx1: Tuple[int, int] = index[idx]
-        data = json.loads(self._read_chunk(idx1[0], idx1[1]))
+        data = self._json_loads(self._read_chunk(idx1[0], idx1[1]))
         self._cache.put(idx, data)
         return data
 
@@ -203,19 +208,19 @@ class JsonLine(collections_abc.Sequence):
             return default
 
     def append(self, data: Any):
-        jdata: str = json.dumps(data)
+        jdata: bytes = self._json_dumps(data)
         self._data_file.close()
 
-        with self._data_path.open('a', encoding='ascii') as f:
+        with self._data_path.open("ab") as f:
             f.seek(0, 2)  # jump to the end of the file
             idx = f.tell()  # get the actual position in the file
             offset = 0
             offset += f.write(jdata)
-            offset += f.write('\n')
             self._index.append((idx, offset))
 
-        self._data_file: TextIO = self._data_path.open('r', encoding='ascii')
+        self._data_file: TextIO = self._data_path.open("r", encoding="utf-8")
         self._dump_index()
+        self._cache.clear()
 
     def extend(self, data: Iterable):
         self._data_file.seek(0, 2)  # jump to the end of the file
@@ -223,21 +228,19 @@ class JsonLine(collections_abc.Sequence):
         self._data_file.close()
 
         buffer = io.BytesIO()
-        f = io.TextIOWrapper(buffer, encoding='ascii', write_through=True)
-
         for dat in data:
-            jdata = json.dumps(dat)
-            idx = f.tell() + end_idx  # get the actual position in the file
+            jdata: bytes = self._json_dumps(dat)
+            idx = buffer.tell() + end_idx  # get the actual position in the file
             offset = 0
-            offset += f.write(jdata)
-            offset += f.write('\n')
+            offset += buffer.write(jdata)
             self._index.append((idx, offset))
 
-        with self._data_path.open('ab') as f:
+        with self._data_path.open("ab") as f:
             f.write(buffer.getvalue())
 
-        self._data_file: TextIO = self._data_path.open('r', encoding='ascii')
+        self._data_file: TextIO = self._data_path.open("r", encoding="utf-8")
         self._dump_index()
+        self._cache.clear()
 
     def close(self):
         if not self._data_file.closed:
@@ -250,7 +253,7 @@ class JsonLine(collections_abc.Sequence):
         idx: int = file.tell()
         data: str = file.readline()
 
-        while data != '':
+        while data != "":
             pos: int = file.tell()
             index.append((idx, pos - idx - 1))
             idx = pos

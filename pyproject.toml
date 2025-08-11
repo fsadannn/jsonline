@@ -1,6 +1,6 @@
 [project]
 name = "jsonline"
-version = "0.4.0"
+version = "0.3.0"
 description = "Jsonline is intend to use to explore and work with json lines files and avoid keep the entire data in memory or constantly read the whole file"
 readme = "README.md"
 license = {file = "LICENSE"}
@@ -8,9 +8,7 @@ authors = [
     {name = "fsadannn", email = "fsadannn@gmail.com"},
 ]
 requires-python = ">=3.11"
-dependencies = []
-[project.optional-dependencies]
-orjson = [
+dependencies = [
     "orjson>=3.11.1",
 ]
 

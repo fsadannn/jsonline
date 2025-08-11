@@ -143,11 +143,9 @@ wheels = [
 
 [[package]]
 name = "jsonline"
-version = "0.4.0"
+version = "0.3.0"
 source = { editable = "." }
-
-[package.optional-dependencies]
-orjson = [
+dependencies = [
     { name = "orjson" },
 ]
 
@@ -158,8 +156,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "orjson", marker = "extra == 'orjson'", specifier = ">=3.11.1" }]
-provides-extras = ["orjson"]
+requires-dist = [{ name = "orjson", specifier = ">=3.11.1" }]
 
 [package.metadata.requires-dev]
 dev = [
