@@ -19,6 +19,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: testing
+      run: ls -la
+
     - name: Verify tag is on master branch
       run: |
         if ! git branch -r --contains ${{ github.ref_name }} | grep -q 'origin/master'; then
