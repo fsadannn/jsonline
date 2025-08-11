@@ -1,6 +1,6 @@
-site_name: Expressive Regex
-repo_name: 'fsadannn/expressive_regex'
-repo_url: 'https://github.com/fsadannn/expressive_regex'
+site_name: Jsonline
+repo_name: 'fsadannn/jsonline'
+repo_url: 'https://github.com/fsadannn/jsonline'
 
 theme:
     name: material
