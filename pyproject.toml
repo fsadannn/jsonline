@@ -1,24 +1,25 @@
-[tool.poetry]
+[project]
 name = "jsonline"
-version = "0.2.1"
-description = ""
-authors = ["fsadannn <fsadannn@gmail.com>"]
-license = "MIT"
-readme = "Readme.md"
+version = "0.4.0"
+description = "Jsonline is intend to use to explore and work with json lines files and avoid keep the entire data in memory or constantly read the whole file"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [
+    {name = "fsadannn", email = "fsadannn@gmail.com"},
+]
+requires-python = ">=3.11"
+dependencies = []
+[project.optional-dependencies]
+orjson = [
+    "orjson>=3.11.1",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.7.0,<4"
-
-[tool.poetry.dev-dependencies]
-pytest = "^5.4.3"
-codecov = "^2.1.8"
-pytest-cov = "^2.10.0"
-pylint = "^2.5.3"
-pylint-exit = "^1.2.0"
-coverage = "^5.2.1"
-mkdocs = "^1.1.2"
-mkdocs-material = "^5.5.0"
+[dependency-groups]
+dev = [
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.6.16",
+]
 
 [build-system]
-requires = ["poetry>=0.12"]
-build-backend = "poetry.masonry.api"
+requires = ["uv_build>=0.8.7,<0.9.0"]
+build-backend = "uv_build"
