@@ -7,7 +7,7 @@ from array import array
 from collections import OrderedDict
 from functools import partial
 from pathlib import Path
-from typing import Any, BinaryIO, Iterable, Optional, TextIO, Tuple, Union
+from typing import Any, BinaryIO, Iterable, Optional, TextIO, Tuple, Union, Hashable
 
 import orjson
 
@@ -33,7 +33,7 @@ class LRUCache:
             raise KeyError(key)
         return default
 
-    def put(self, key: Any, value: Any):
+    def put(self, key: Hashable, value: Any):
         cache = self._cache
         cache[key] = value
         cache.move_to_end(key)
@@ -48,7 +48,7 @@ class LRUCache:
 
 
 class PositionArray(collections_abc.MutableSequence):
-    __slots__ = "_data"
+    __slots__ = ("_data",)
 
     def __init__(self, data: Optional[array] = None):
         if data is not None:
@@ -101,7 +101,7 @@ class PositionArray(collections_abc.MutableSequence):
         self._data.pop(2 * idx)
         self._data.pop(2 * idx)
 
-    def insert(self, index, value: Tuple[int, int]):
+    def insert(self, index: int, value: Tuple[int, int]):
         index_bound = len(self._data) // 2
 
         if index > index_bound or index < 0:
@@ -226,12 +226,18 @@ class JsonLine(collections_abc.Sequence):
         self._data_file.close()
 
         buffer = io.BytesIO()
+        idx = 0
         for dat in data:
             jdata: bytes = self._json_dumps(dat)
             idx = buffer.tell() + end_idx  # get the actual position in the file
             offset = 0
             offset += buffer.write(jdata)
             self._index.append((idx, offset))
+
+        if idx > 0xFFFFFFFF:
+            raise OverflowError(
+                "The file is too large to be indexed, upto 4G is supported"
+            )
 
         with self._data_path.open("ab") as f:
             f.write(buffer.getvalue())
@@ -256,6 +262,11 @@ class JsonLine(collections_abc.Sequence):
             index.append((idx, pos - idx - 1))
             idx = pos
             data = file.readline()
+
+        if pos > 0xFFFFFFFF:
+            raise OverflowError(
+                "The file is too large to be indexed, upto 4G is supported"
+            )
 
         self._index = index
         self._dump_index()
